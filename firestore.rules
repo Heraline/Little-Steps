@@ -1,0 +1,90 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // ---------------------------------------------------------------
+    // users/{uid} — public-ish profile info (username, display name,
+    // emoji). Anyone signed in can read profiles (needed to show a
+    // friend's name); only the owner can create/update their own.
+    // ---------------------------------------------------------------
+    match /users/{uid} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && request.auth.uid == uid;
+      allow update: if isSignedIn() && request.auth.uid == uid;
+      allow delete: if false;
+
+      // users/{uid}/friends/{otherUid} — a mirrored edge of a friendship.
+      // A request writes matching docs on BOTH users' subcollections at
+      // once (see src/lib/friendApi.js), so each person only ever
+      // writes inside their own subcollection plus the other person's
+      // mirror doc that names them.
+      match /friends/{otherUid} {
+        // You can read your own friends list. You can also read a
+        // single mirror doc that names you, so the other person's
+        // client can confirm the edge exists.
+        allow read: if isSignedIn() && (request.auth.uid == uid || request.auth.uid == otherUid);
+
+        // Sending a request: you write your own outgoing doc AND the
+        // other person's incoming mirror doc in the same batch.
+        allow create: if isSignedIn() &&
+          (request.auth.uid == uid || request.auth.uid == otherUid) &&
+          request.resource.data.status == 'pending';
+
+        // Accepting: either side may flip status to 'accepted' on
+        // either doc (both are updated together in one batch).
+        allow update: if isSignedIn() &&
+          (request.auth.uid == uid || request.auth.uid == otherUid) &&
+          request.resource.data.status == 'accepted';
+
+        // Declining / removing a friend deletes both mirror docs.
+        allow delete: if isSignedIn() && (request.auth.uid == uid || request.auth.uid == otherUid);
+      }
+    }
+
+    // ---------------------------------------------------------------
+    // usernames/{lowercaseUsername} -> { uid }
+    // Public read so sign-up can check availability before an account
+    // exists yet. Only ever "created" (never updated), which is what
+    // makes usernames unique: a second write to the same id is treated
+    // as an update and is rejected.
+    // ---------------------------------------------------------------
+    match /usernames/{name} {
+      allow read: if true;
+      allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    // ---------------------------------------------------------------
+    // habits/{habitId} — owner can do anything; an accepted friend can
+    // only read.
+    // ---------------------------------------------------------------
+    match /habits/{habitId} {
+      allow read: if isSignedIn() && (
+        resource.data.userId == request.auth.uid ||
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)/friends/$(resource.data.userId)) &&
+          get(/databases/$(database)/documents/users/$(request.auth.uid)/friends/$(resource.data.userId)).data.status == 'accepted'
+      );
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+
+    // ---------------------------------------------------------------
+    // habitLogs/{habitId_logDate} — same ownership pattern as habits.
+    // ---------------------------------------------------------------
+    match /habitLogs/{logId} {
+      allow read: if isSignedIn() && (
+        resource.data.userId == request.auth.uid ||
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)/friends/$(resource.data.userId)) &&
+          get(/databases/$(database)/documents/users/$(request.auth.uid)/friends/$(resource.data.userId)).data.status == 'accepted'
+      );
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+  }
+}
