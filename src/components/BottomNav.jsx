@@ -89,14 +89,18 @@ export default function BottomNav() {
   return (
     <nav className="bottom-nav">
       {items.map(({ to, Icon, key, end }) => (
-        <NavLink key={key} to={to} end={end} className={({ isActive }) => 'nav-item' + (isActive ? ' active' : '')}>
+        <NavLink
+          key={key}
+          to={to}
+          end={end}
+          aria-label={t(key)}
+          title={t(key)}
+          className={({ isActive }) => 'nav-item' + (isActive ? ' active' : '')}
+        >
           {({ isActive }) => (
-            <>
-              <span className="nav-icon">
-                <Icon active={isActive} />
-              </span>
-              <span className="nav-label">{t(key)}</span>
-            </>
+            <span className="nav-icon">
+              <Icon active={isActive} />
+            </span>
           )}
         </NavLink>
       ))}
