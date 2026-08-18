@@ -108,7 +108,7 @@ export default function Home() {
     if (!window.confirm(t('deleteHabitConfirm'))) return
     setDeleting(true)
     try {
-      await deleteHabit(habit.id)
+      await deleteHabit(habit.id, user.uid)
       setMenuHabit(null)
       load()
     } catch (err) {

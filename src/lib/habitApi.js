@@ -92,9 +92,16 @@ export async function updateHabit(habitId, changes) {
   return fetchHabit(habitId)
 }
 
-export async function deleteHabit(habitId) {
-  // Remove the habit and every log that belongs to it.
-  const logsQuery = query(logsCol, where('habitId', '==', habitId))
+export async function deleteHabit(habitId, userId) {
+  // Remove the habit and every log that belongs to it. Firestore security
+  // rules require every doc a query touches to satisfy
+  // `resource.data.userId == request.auth.uid`, and it enforces this by
+  // statically checking the query itself — a query filtered only on
+  // habitId can't be proven to only match the caller's own docs, so it
+  // gets rejected with "Missing or insufficient permissions" even though
+  // every matching doc would in practice belong to them. Filtering on
+  // userId too makes the query provably safe.
+  const logsQuery = query(logsCol, where('habitId', '==', habitId), where('userId', '==', userId))
   const logsSnap = await getDocs(logsQuery)
   const batch = writeBatch(db)
   logsSnap.docs.forEach((d) => batch.delete(d.ref))

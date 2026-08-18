@@ -63,7 +63,7 @@ export default function HabitDetail() {
 
   async function handleDelete() {
     if (!window.confirm(t('deleteHabitConfirm'))) return
-    await deleteHabit(habitId)
+    await deleteHabit(habitId, user.uid)
     navigate('/analysis')
   }
 
