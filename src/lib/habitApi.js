@@ -58,8 +58,19 @@ export async function fetchLogsInRange(userId, startKey, endKey) {
   return snap.docs.map(toLog)
 }
 
-export async function fetchAllLogsForHabit(habitId) {
-  const q = query(logsCol, where('habitId', '==', habitId), orderBy('logDate', 'asc'))
+export async function fetchAllLogsForHabit(habitId, userId) {
+  // Same constraint as deleteHabit: security rules require every doc a
+  // query touches to provably satisfy `userId == request.auth.uid`, so a
+  // query filtered only on habitId gets rejected outright. Filtering on
+  // userId too makes it provably safe (and matches the composite index:
+  // habitId asc, logDate asc — userId isn't part of that index, so this
+  // is filtered client-visible via the where clause, not sorted by it).
+  const q = query(
+    logsCol,
+    where('habitId', '==', habitId),
+    where('userId', '==', userId),
+    orderBy('logDate', 'asc')
+  )
   const snap = await getDocs(q)
   return snap.docs.map(toLog)
 }

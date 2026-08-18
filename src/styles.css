@@ -174,21 +174,21 @@ input:focus-visible {
 /* ---------- Habit grid (Home) ---------- */
 .habit-grid {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 8px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
   margin-top: 8px;
 }
 
 .habit-tile {
   background: var(--card);
   border: 2px solid var(--border);
-  border-radius: var(--radius-md, 14px);
-  padding: 10px 4px 8px;
+  border-radius: var(--radius-lg);
+  padding: 16px 8px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
-  min-height: 86px;
+  gap: 8px;
+  min-height: 108px;
   position: relative;
   transition: transform 0.12s ease, background 0.2s ease, border-color 0.2s ease;
 }
@@ -203,12 +203,12 @@ input:focus-visible {
 }
 
 .habit-tile .tile-icon {
-  font-size: 24px;
+  font-size: 34px;
   line-height: 1;
 }
 
 .habit-tile .tile-name {
-  font-size: 11px;
+  font-size: var(--fs-sm);
   line-height: 1.2;
   font-weight: 700;
   text-align: center;
@@ -222,25 +222,25 @@ input:focus-visible {
 
 .habit-tile .tile-check {
   position: absolute;
-  top: 4px;
-  right: 4px;
-  width: 18px;
-  height: 18px;
+  top: 8px;
+  right: 8px;
+  width: 22px;
+  height: 22px;
   border-radius: 50%;
   background: var(--sage);
   color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 11px;
+  font-size: 14px;
 }
 
 .habit-tile .tile-menu-btn {
   position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 20px;
-  height: 20px;
+  top: 6px;
+  left: 6px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -258,7 +258,7 @@ input:focus-visible {
 }
 
 .habit-tile .tile-streak {
-  font-size: 10px;
+  font-size: var(--fs-sm);
   color: var(--coral);
   font-weight: 800;
 }
@@ -271,7 +271,7 @@ input:focus-visible {
 }
 
 .add-tile .tile-icon {
-  font-size: 22px;
+  font-size: 30px;
   color: var(--lavender);
 }
 

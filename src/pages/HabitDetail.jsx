@@ -31,16 +31,23 @@ export default function HabitDetail() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    if (!user) return
     async function load() {
       setLoading(true)
       const habitRow = await fetchHabit(habitId)
       setHabit(habitRow)
-      const logs = await fetchAllLogsForHabit(habitId)
-      setDoneDates(new Set(logs.map((l) => l.logDate)))
+      if (habitRow) {
+        // Filter by the habit's actual owner, not the viewer — this page
+        // is also used read-only to view a friend's habit, where those
+        // are different people. The Firestore rule allows either the
+        // owner or an accepted friend of the owner to read.
+        const logs = await fetchAllLogsForHabit(habitId, habitRow.userId)
+        setDoneDates(new Set(logs.map((l) => l.logDate)))
+      }
       setLoading(false)
     }
     load()
-  }, [habitId])
+  }, [habitId, user])
 
   const streak = useMemo(() => computeCurrentStreak(doneDates), [doneDates])
   const totalCompleted = doneDates.size
