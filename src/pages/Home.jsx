@@ -1,10 +1,19 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { useLang } from '../contexts/LangContext'
-import { fetchHabits, fetchLogsInRange, toggleHabitToday, createHabit, computeCurrentStreak } from '../lib/habitApi'
+import {
+  fetchHabits,
+  fetchLogsInRange,
+  toggleHabitToday,
+  createHabit,
+  updateHabit,
+  deleteHabit,
+  computeCurrentStreak,
+} from '../lib/habitApi'
 import { addDays, toDateKey, todayKey } from '../lib/dateUtils'
 import HabitGrid from '../components/HabitGrid'
 import AddHabitModal from '../components/AddHabitModal'
+import HabitActionSheet from '../components/HabitActionSheet'
 import BottomNav from '../components/BottomNav'
 
 export default function Home() {
@@ -16,6 +25,9 @@ export default function Home() {
   const [loading, setLoading] = useState(true)
   const [showAdd, setShowAdd] = useState(false)
   const [loadError, setLoadError] = useState(null)
+  const [menuHabit, setMenuHabit] = useState(null)
+  const [editHabit, setEditHabit] = useState(null)
+  const [deleting, setDeleting] = useState(false)
 
   const load = useCallback(async () => {
     if (!user) return
@@ -85,6 +97,28 @@ export default function Home() {
     load()
   }
 
+  async function handleUpdateHabit(payload) {
+    if (!editHabit) return
+    await updateHabit(editHabit.id, payload)
+    setEditHabit(null)
+    load()
+  }
+
+  async function handleDeleteHabit(habit) {
+    if (!window.confirm(t('deleteHabitConfirm'))) return
+    setDeleting(true)
+    try {
+      await deleteHabit(habit.id)
+      setMenuHabit(null)
+      load()
+    } catch (err) {
+      console.error('Failed to delete habit:', err)
+      window.alert(err.message || String(err))
+    } finally {
+      setDeleting(false)
+    }
+  }
+
   const dateStr = new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })
 
   return (
@@ -134,11 +168,28 @@ export default function Home() {
             readOnly={false}
             onToggle={handleToggle}
             onAdd={() => setShowAdd(true)}
+            onMenu={(habit) => setMenuHabit(habit)}
           />
         )}
       </div>
 
       {showAdd && <AddHabitModal onClose={() => setShowAdd(false)} onSave={handleSaveHabit} />}
+
+      {editHabit && (
+        <AddHabitModal habit={editHabit} onClose={() => setEditHabit(null)} onSave={handleUpdateHabit} />
+      )}
+
+      {menuHabit && (
+        <HabitActionSheet
+          habit={menuHabit}
+          onClose={() => (deleting ? null : setMenuHabit(null))}
+          onEdit={(habit) => {
+            setMenuHabit(null)
+            setEditHabit(habit)
+          }}
+          onDelete={handleDeleteHabit}
+        />
+      )}
 
       <BottomNav />
     </div>

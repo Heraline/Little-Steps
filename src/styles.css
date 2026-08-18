@@ -235,6 +235,28 @@ input:focus-visible {
   font-size: 14px;
 }
 
+.habit-tile .tile-menu-btn {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink-soft);
+  background: transparent;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.habit-tile .tile-menu-btn:hover,
+.habit-tile .tile-menu-btn:focus-visible {
+  background: rgba(0, 0, 0, 0.06);
+  color: var(--ink);
+  outline: none;
+}
+
 .habit-tile .tile-streak {
   font-size: var(--fs-sm);
   color: var(--coral);

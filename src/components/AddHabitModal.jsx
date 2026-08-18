@@ -4,14 +4,17 @@ import { useLang } from '../contexts/LangContext'
 const ICONS = ['💧', '🥛', '🏃', '☕', '🧘', '💰', '📖', '🎨', '🍎', '🥦', '💊', '⏰', '🛁', '😴', '📝', '🚭', '🚶', '🧹']
 const COLORS = ['#6FA88F', '#FF7A6B', '#F2A65A', '#A8A4D9', '#5BA3D0', '#E27DBF', '#8FBF6F', '#D9534F']
 
-export default function AddHabitModal({ onClose, onSave }) {
+export default function AddHabitModal({ onClose, onSave, habit }) {
   const { t, lang } = useLang()
-  const [nameZh, setNameZh] = useState('')
-  const [nameEn, setNameEn] = useState('')
-  const [icon, setIcon] = useState(ICONS[0])
-  const [color, setColor] = useState(COLORS[0])
-  const [frequency, setFrequency] = useState('daily')
-  const [timesPerWeek, setTimesPerWeek] = useState(3)
+  const isEdit = Boolean(habit)
+  const [nameZh, setNameZh] = useState(habit?.nameZh || '')
+  const [nameEn, setNameEn] = useState(habit?.nameEn || '')
+  const [icon, setIcon] = useState(habit?.icon || ICONS[0])
+  const [color, setColor] = useState(habit?.color || COLORS[0])
+  const [frequency, setFrequency] = useState(habit?.frequency || 'daily')
+  const [timesPerWeek, setTimesPerWeek] = useState(
+    habit?.frequency === 'weekly' ? habit.timesPerPeriod || 3 : 3
+  )
   const [saving, setSaving] = useState(false)
 
   const nameValue = lang === 'zh' ? nameZh : nameEn
@@ -37,7 +40,8 @@ export default function AddHabitModal({ onClose, onSave }) {
   return (
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal-sheet" onClick={(e) => e.stopPropagation()}>
-        <h2 className="modal-title">{t('addHabit')}</h2>
+        <h2 className="modal-title">{isEdit ? t('editHabit') : t('addHabit')}</h2>
+
 
         <div className="field">
           <label htmlFor="habit-name">{t('addHabit')}</label>

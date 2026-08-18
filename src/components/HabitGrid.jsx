@@ -1,7 +1,7 @@
 import HabitTile from './HabitTile'
 import { useLang } from '../contexts/LangContext'
 
-export default function HabitGrid({ habits, doneMap, streakMap, readOnly, onToggle, onAdd, onOpenHabit }) {
+export default function HabitGrid({ habits, doneMap, streakMap, readOnly, onToggle, onAdd, onOpenHabit, onMenu }) {
   const { t } = useLang()
 
   if (habits.length === 0) {
@@ -25,6 +25,7 @@ export default function HabitGrid({ habits, doneMap, streakMap, readOnly, onTogg
           readOnly={readOnly}
           onToggle={onToggle}
           onOpen={onOpenHabit}
+          onMenu={onMenu}
         />
       ))}
       {!readOnly && (
