@@ -15,19 +15,30 @@ export default function Home() {
   const [logs, setLogs] = useState([])
   const [loading, setLoading] = useState(true)
   const [showAdd, setShowAdd] = useState(false)
+  const [loadError, setLoadError] = useState(null)
 
   const load = useCallback(async () => {
     if (!user) return
     setLoading(true)
-    const start = toDateKey(addDays(new Date(), -60))
-    const end = todayKey()
-    const [habitsData, logsData] = await Promise.all([
-      fetchHabits(user.uid),
-      fetchLogsInRange(user.uid, start, end),
-    ])
-    setHabits(habitsData)
-    setLogs(logsData)
-    setLoading(false)
+    setLoadError(null)
+    try {
+      const start = toDateKey(addDays(new Date(), -60))
+      const end = todayKey()
+      const [habitsData, logsData] = await Promise.all([
+        fetchHabits(user.uid),
+        fetchLogsInRange(user.uid, start, end),
+      ])
+      setHabits(habitsData)
+      setLogs(logsData)
+    } catch (err) {
+      // Most commonly this is a missing Firestore composite index — the
+      // error message from Firebase includes a direct link that creates
+      // it for you in one click. See firebase/firestore.indexes.json.
+      console.error('Failed to load habits:', err)
+      setLoadError(err.message || String(err))
+    } finally {
+      setLoading(false)
+    }
   }, [user])
 
   useEffect(() => {
@@ -88,6 +99,30 @@ export default function Home() {
             ＋
           </button>
         </div>
+
+        {loadError && (
+          <div
+            role="alert"
+            style={{
+              background: '#FDEDEC',
+              border: '1px solid #D9534F',
+              color: '#8a2e28',
+              borderRadius: 'var(--radius-sm)',
+              padding: '12px 14px',
+              margin: '8px 0',
+              fontSize: 'var(--fs-sm)',
+              lineHeight: 1.4,
+              wordBreak: 'break-word',
+            }}
+          >
+            <strong>Couldn't load your habits.</strong> {loadError}
+            <div style={{ marginTop: 8 }}>
+              <button className="btn btn-outline" onClick={load}>
+                {t('loading') === 'Loading…' ? 'Try again' : t('loading')}
+              </button>
+            </div>
+          </div>
+        )}
 
         {loading ? (
           <div className="center-loading">{t('loading')}</div>
