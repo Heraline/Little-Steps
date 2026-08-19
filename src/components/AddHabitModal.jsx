@@ -1,12 +1,18 @@
 import { useState } from 'react'
 import { useLang } from '../contexts/LangContext'
+import { useAuth } from '../contexts/AuthContext'
+import { storage } from '../firebaseClient'
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
+import HabitIcon, { isCustomIconUrl } from './HabitIcon'
 
-const ICONS = [
-  '💧', '🥛', '🏃', '☕', '🧘', '💰', '📖', '🎨', '🍎', '🥦',
-  '💊', '⏰', '🛁', '😴', '📝', '🚭', '🚶', '🧹', '🏋️', '🚴',
-  '🎧', '🎹', '🎸', '💻', '📞', '🪥', '🍳', '🥗', '🍵', '🌞',
-  '🌳', '🐕', '🙏', '🏊', '⚽', '🎯', '📷', '✂️', '🎮', '🧴',
-  '🧵', '🧦', '🧼', '🪴', '🚗', '✈️', '🎓', '🧠', '❤️', '🌟',
+const ICON_CATEGORIES = [
+  { key: 'catHealth', icons: ['💧', '🥛', '💊', '🛁', '😴', '🪥', '🧴', '🧠', '❤️'] },
+  { key: 'catFitness', icons: ['🏃', '🧘', '🏋️', '🚴', '🏊', '⚽', '🚶', '🎯'] },
+  { key: 'catDiet', icons: ['☕', '🍎', '🥦', '🍳', '🥗', '🍵'] },
+  { key: 'catHobby', icons: ['📖', '🎨', '🎧', '🎹', '🎸', '📷', '✂️', '🎮', '🧵'] },
+  { key: 'catWork', icons: ['💰', '📝', '💻', '📞', '🎓'] },
+  { key: 'catHome', icons: ['🧹', '🚭', '🧦', '🧼', '🪴'] },
+  { key: 'catOther', icons: ['⏰', '🌞', '🌳', '🐕', '🙏', '🚗', '✈️', '🌟'] },
 ]
 const COLORS = ['#6FA88F', '#FF7A6B', '#F2A65A', '#A8A4D9', '#5BA3D0', '#E27DBF', '#8FBF6F', '#D9534F']
 
@@ -18,12 +24,15 @@ export const REMINDER_TIMES = [
   { key: 'night', icon: '🌙' },
 ]
 
+const MAX_ICON_BYTES = 2 * 1024 * 1024
+
 export default function AddHabitModal({ onClose, onSave, habit }) {
   const { t, lang } = useLang()
+  const { user } = useAuth()
   const isEdit = Boolean(habit)
   const [nameZh, setNameZh] = useState(habit?.nameZh || '')
   const [nameEn, setNameEn] = useState(habit?.nameEn || '')
-  const [icon, setIcon] = useState(habit?.icon || ICONS[0])
+  const [icon, setIcon] = useState(habit?.icon || ICON_CATEGORIES[0].icons[0])
   const [color, setColor] = useState(habit?.color || COLORS[0])
   const [frequency, setFrequency] = useState(habit?.frequency || 'daily')
   const [timesPerWeek, setTimesPerWeek] = useState(
@@ -31,9 +40,40 @@ export default function AddHabitModal({ onClose, onSave, habit }) {
   )
   const [reminderTime, setReminderTime] = useState(habit?.reminderTime || 'anytime')
   const [saving, setSaving] = useState(false)
+  const [uploading, setUploading] = useState(false)
+  const [uploadError, setUploadError] = useState(null)
 
   const nameValue = lang === 'zh' ? nameZh : nameEn
   const canSave = nameValue.trim().length > 0 && !saving
+
+  async function handleFileChange(e) {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file || !user) return
+    if (!file.type.startsWith('image/')) {
+      setUploadError(t('uploadInvalidType'))
+      return
+    }
+    if (file.size > MAX_ICON_BYTES) {
+      setUploadError(t('uploadTooLarge'))
+      return
+    }
+    setUploading(true)
+    setUploadError(null)
+    try {
+      const safeName = file.name.replace(/[^a-zA-Z0-9.]/g, '_')
+      const path = `habitIcons/${user.uid}/${Date.now()}-${safeName}`
+      const fileRef = ref(storage, path)
+      await uploadBytes(fileRef, file)
+      const url = await getDownloadURL(fileRef)
+      setIcon(url)
+    } catch (err) {
+      console.error('Icon upload failed:', err)
+      setUploadError(err.message || String(err))
+    } finally {
+      setUploading(false)
+    }
+  }
 
   async function handleSave() {
     if (!canSave) return
@@ -73,18 +113,43 @@ export default function AddHabitModal({ onClose, onSave, habit }) {
 
         <div className="field">
           <label>{t('chooseIcon')}</label>
-          <div className="picker-grid">
-            {ICONS.map((ic) => (
-              <button
-                key={ic}
-                type="button"
-                className={'picker-cell' + (icon === ic ? ' selected' : '')}
-                onClick={() => setIcon(ic)}
-              >
-                {ic}
-              </button>
-            ))}
+
+          <div className="icon-upload-row">
+            <label className={'reminder-cell upload-cell' + (isCustomIconUrl(icon) ? ' selected' : '')}>
+              {uploading ? (
+                <span className="reminder-cell-icon">⏳</span>
+              ) : (
+                <HabitIcon icon={isCustomIconUrl(icon) ? icon : '📤'} imgSize="70%" className="reminder-cell-icon" />
+              )}
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleFileChange}
+                disabled={uploading}
+                style={{ display: 'none' }}
+              />
+            </label>
+            <span className="icon-upload-hint">{t('uploadOwnIcon')}</span>
           </div>
+          {uploadError && <p className="field-error">{uploadError}</p>}
+
+          {ICON_CATEGORIES.map((cat) => (
+            <div key={cat.key} className="icon-category">
+              <div className="icon-category-label">{t(cat.key)}</div>
+              <div className="picker-grid">
+                {cat.icons.map((ic) => (
+                  <button
+                    key={ic}
+                    type="button"
+                    className={'picker-cell' + (icon === ic ? ' selected' : '')}
+                    onClick={() => setIcon(ic)}
+                  >
+                    {ic}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
         </div>
 
         <div className="field">

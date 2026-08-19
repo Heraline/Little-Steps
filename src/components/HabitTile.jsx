@@ -1,4 +1,5 @@
 import { useLang } from '../contexts/LangContext'
+import HabitIcon from './HabitIcon'
 
 export default function HabitTile({ habit, done, streak, readOnly, onToggle, onOpen, onMenu }) {
   const { lang } = useLang()
@@ -39,7 +40,7 @@ export default function HabitTile({ habit, done, streak, readOnly, onToggle, onO
         </span>
       )}
       {done && <span className="tile-check">✓</span>}
-      <span className="tile-icon">{habit.icon}</span>
+      <HabitIcon icon={habit.icon} className="tile-icon" />
       <span className="tile-name">{name}</span>
       {streak > 0 && <span className="tile-streak">🔥{streak}</span>}
     </button>

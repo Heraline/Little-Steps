@@ -5,6 +5,7 @@ import { toDateKey, startOfWeek, addDays, getMonthDays, isFutureDay, WEEKDAY_KEY
 import { getWeekDots, getMonthDots, getYearMonthDots } from '../lib/habitStats'
 import PeriodTabs from './PeriodTabs'
 import PeriodNav from './PeriodNav'
+import HabitIcon from './HabitIcon'
 
 export default function AnalysisView({ userId, readOnly, onHabitClick }) {
   const { t, lang } = useLang()
@@ -133,7 +134,7 @@ function HabitSummaryRow({ habit, period, anchor, doneDates, lang, t, onClick })
   return (
     <div className="habit-row" role="button" tabIndex={0} onClick={onClick}>
       <span className="row-icon" style={{ background: habit.color + '33' }}>
-        {habit.icon}
+        <HabitIcon icon={habit.icon} imgSize="70%" />
       </span>
       <div className="row-body">
         <div className="row-name">{name}</div>

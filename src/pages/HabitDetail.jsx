@@ -5,6 +5,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { fetchHabit, fetchAllLogsForHabit, deleteHabit, computeCurrentStreak } from '../lib/habitApi'
 import { toDateKey, startOfWeek, addDays, getMonthDays, daysInMonth, isFutureDay, MONTH_KEYS, WEEKDAY_KEYS } from '../lib/dateUtils'
 import { getWeekDots, getMonthDots, getYearMonthDots } from '../lib/habitStats'
+import HabitIcon from '../components/HabitIcon'
 import PeriodTabs from '../components/PeriodTabs'
 import PeriodNav from '../components/PeriodNav'
 
@@ -91,7 +92,7 @@ export default function HabitDetail() {
 
       <div className="habit-detail-header">
         <div className="habit-detail-badge" style={{ background: habit.color + '26' }}>
-          <span>{habit.icon}</span>
+          <HabitIcon icon={habit.icon} imgSize="70%" />
         </div>
         <h1 className="habit-detail-name">{name}</h1>
       </div>

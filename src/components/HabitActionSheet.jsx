@@ -1,4 +1,5 @@
 import { useLang } from '../contexts/LangContext'
+import HabitIcon from './HabitIcon'
 
 export default function HabitActionSheet({ habit, onClose, onEdit, onDelete }) {
   const { t, lang } = useLang()
@@ -8,7 +9,7 @@ export default function HabitActionSheet({ habit, onClose, onEdit, onDelete }) {
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal-sheet" onClick={(e) => e.stopPropagation()} style={{ paddingBottom: 16 }}>
         <h2 className="modal-title" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span>{habit.icon}</span>
+          <HabitIcon icon={habit.icon} imgSize="1.2em" />
           <span>{name}</span>
         </h2>
 

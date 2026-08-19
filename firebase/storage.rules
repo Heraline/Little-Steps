@@ -1,0 +1,17 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Custom habit icons uploaded by a user. Anyone signed in may read
+    // any icon (so an accepted friend can see your habit's custom icon on
+    // their Friends dashboard), but a user may only write into their own
+    // folder, and only small image files.
+    match /habitIcons/{userId}/{fileName} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null
+                   && request.auth.uid == userId
+                   && request.resource.size < 2 * 1024 * 1024
+                   && request.resource.contentType.matches('image/.*');
+      allow delete: if request.auth != null && request.auth.uid == userId;
+    }
+  }
+}
