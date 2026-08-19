@@ -51,18 +51,11 @@ automatically every time you update the code.
    name, fields, and order). If you skip this, the app will still work, but the very first
    time each type of query runs, the browser's developer console will show an error with a
    direct link that creates the missing index for you in one click — either approach works.
-7. In the left sidebar, go to **Build → Storage → Get started**, and accept the default
-   settings. This is needed for the "upload your own habit icon" feature — habit icons that
-   aren't one of the built-in emoji get uploaded here.
-8. Open Storage's **Rules** tab and replace the contents with the file
-   [`firebase/storage.rules`](./firebase/storage.rules) from this repo, then **Publish**.
-   This keeps uploads limited to small images (under 2MB) and to the signed-in user's own
-   folder.
-9. Now register a **web app**: click the gear icon next to "Project Overview" → **Project
+7. Now register a **web app**: click the gear icon next to "Project Overview" → **Project
    settings** → scroll to **Your apps** → click the **</>** (web) icon → give it a nickname →
    **Register app**. Firebase will show you a `firebaseConfig` object — keep this tab open,
    you'll need those values in Step 3.
-10. Go to **Authentication → Settings → Authorized domains** and add
+8. Go to **Authentication → Settings → Authorized domains** and add
    `yourusername.github.io` (once you know your GitHub Pages URL from Step 4, come back and
    add the exact domain — Firebase Auth only works from domains on this list).
 

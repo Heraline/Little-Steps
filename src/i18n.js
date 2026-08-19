@@ -92,7 +92,7 @@ export const translations = {
     catOther: 'Other',
     uploadOwnIcon: 'Upload your own icon',
     uploadInvalidType: 'Please choose an image file.',
-    uploadTooLarge: 'Image must be under 2MB.',
+    uploadTooLarge: 'That image is too large (max 15MB).',
   },
   zh: {
     appName: '一点点',
@@ -187,7 +187,7 @@ export const translations = {
     catOther: '其他',
     uploadOwnIcon: '上传自己的图标',
     uploadInvalidType: '请选择图片文件。',
-    uploadTooLarge: '图片大小需小于 2MB。',
+    uploadTooLarge: '图片过大（最大 15MB）。',
   },
 }
 

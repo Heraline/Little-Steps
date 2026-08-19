@@ -1,8 +1,6 @@
 import { useState } from 'react'
 import { useLang } from '../contexts/LangContext'
-import { useAuth } from '../contexts/AuthContext'
-import { storage } from '../firebaseClient'
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
+import { resizeImageToDataUrl } from '../lib/imageUtils'
 import HabitIcon, { isCustomIconUrl } from './HabitIcon'
 
 const ICON_CATEGORIES = [
@@ -24,11 +22,10 @@ export const REMINDER_TIMES = [
   { key: 'night', icon: '🌙' },
 ]
 
-const MAX_ICON_BYTES = 2 * 1024 * 1024
+const MAX_ORIGINAL_BYTES = 15 * 1024 * 1024 // original file, before client-side compression
 
 export default function AddHabitModal({ onClose, onSave, habit }) {
   const { t, lang } = useLang()
-  const { user } = useAuth()
   const isEdit = Boolean(habit)
   const [nameZh, setNameZh] = useState(habit?.nameZh || '')
   const [nameEn, setNameEn] = useState(habit?.nameEn || '')
@@ -49,26 +46,22 @@ export default function AddHabitModal({ onClose, onSave, habit }) {
   async function handleFileChange(e) {
     const file = e.target.files?.[0]
     e.target.value = ''
-    if (!file || !user) return
+    if (!file) return
     if (!file.type.startsWith('image/')) {
       setUploadError(t('uploadInvalidType'))
       return
     }
-    if (file.size > MAX_ICON_BYTES) {
+    if (file.size > MAX_ORIGINAL_BYTES) {
       setUploadError(t('uploadTooLarge'))
       return
     }
     setUploading(true)
     setUploadError(null)
     try {
-      const safeName = file.name.replace(/[^a-zA-Z0-9.]/g, '_')
-      const path = `habitIcons/${user.uid}/${Date.now()}-${safeName}`
-      const fileRef = ref(storage, path)
-      await uploadBytes(fileRef, file)
-      const url = await getDownloadURL(fileRef)
-      setIcon(url)
+      const dataUrl = await resizeImageToDataUrl(file)
+      setIcon(dataUrl)
     } catch (err) {
-      console.error('Icon upload failed:', err)
+      console.error('Icon processing failed:', err)
       setUploadError(err.message || String(err))
     } finally {
       setUploading(false)
