@@ -4,6 +4,14 @@ import { useLang } from '../contexts/LangContext'
 const ICONS = ['💧', '🥛', '🏃', '☕', '🧘', '💰', '📖', '🎨', '🍎', '🥦', '💊', '⏰', '🛁', '😴', '📝', '🚭', '🚶', '🧹']
 const COLORS = ['#6FA88F', '#FF7A6B', '#F2A65A', '#A8A4D9', '#5BA3D0', '#E27DBF', '#8FBF6F', '#D9534F']
 
+export const REMINDER_TIMES = [
+  { key: 'anytime', icon: '🕐' },
+  { key: 'morning', icon: '🌤️' },
+  { key: 'noon', icon: '☀️' },
+  { key: 'evening', icon: '🌆' },
+  { key: 'night', icon: '🌙' },
+]
+
 export default function AddHabitModal({ onClose, onSave, habit }) {
   const { t, lang } = useLang()
   const isEdit = Boolean(habit)
@@ -15,6 +23,7 @@ export default function AddHabitModal({ onClose, onSave, habit }) {
   const [timesPerWeek, setTimesPerWeek] = useState(
     habit?.frequency === 'weekly' ? habit.timesPerPeriod || 3 : 3
   )
+  const [reminderTime, setReminderTime] = useState(habit?.reminderTime || 'anytime')
   const [saving, setSaving] = useState(false)
 
   const nameValue = lang === 'zh' ? nameZh : nameEn
@@ -31,6 +40,7 @@ export default function AddHabitModal({ onClose, onSave, habit }) {
         color,
         frequency,
         timesPerPeriod: frequency === 'weekly' ? timesPerWeek : 1,
+        reminderTime,
       })
     } finally {
       setSaving(false)
@@ -112,6 +122,22 @@ export default function AddHabitModal({ onClose, onSave, habit }) {
             />
           </div>
         )}
+
+        <div className="field">
+          <label>{t('reminderTime')}</label>
+          <div className="segmented segmented-wrap">
+            {REMINDER_TIMES.map((rt) => (
+              <button
+                key={rt.key}
+                type="button"
+                className={reminderTime === rt.key ? 'active' : ''}
+                onClick={() => setReminderTime(rt.key)}
+              >
+                {rt.icon} {t(rt.key)}
+              </button>
+            ))}
+          </div>
+        </div>
 
         <button className="btn btn-primary" onClick={handleSave} disabled={!canSave} style={{ marginBottom: 10 }}>
           {saving ? t('loading') : t('save')}

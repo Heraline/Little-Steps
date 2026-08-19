@@ -75,15 +75,20 @@ export async function fetchAllLogsForHabit(habitId, userId) {
   return snap.docs.map(toLog)
 }
 
-export async function toggleHabitToday(habit, userId, existingLog) {
-  const id = logDocId(habit.id, todayKey())
+export async function toggleHabitOnDate(habit, userId, dateKey, existingLog) {
+  const id = logDocId(habit.id, dateKey)
   if (existingLog) {
     await deleteDoc(doc(db, 'habitLogs', id))
     return null
   }
-  const payload = { habitId: habit.id, userId, logDate: todayKey(), completed: true, createdAt: serverTimestamp() }
+  const payload = { habitId: habit.id, userId, logDate: dateKey, completed: true, createdAt: serverTimestamp() }
   await setDoc(doc(db, 'habitLogs', id), payload)
   return { id, ...payload }
+}
+
+// Back-compat alias for the common case of toggling today's entry.
+export async function toggleHabitToday(habit, userId, existingLog) {
+  return toggleHabitOnDate(habit, userId, todayKey(), existingLog)
 }
 
 export async function createHabit(userId, habit) {

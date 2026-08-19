@@ -4,13 +4,14 @@ import { useLang } from '../contexts/LangContext'
 import {
   fetchHabits,
   fetchLogsInRange,
-  toggleHabitToday,
+  toggleHabitOnDate,
   createHabit,
   updateHabit,
   deleteHabit,
   computeCurrentStreak,
 } from '../lib/habitApi'
-import { addDays, toDateKey, todayKey } from '../lib/dateUtils'
+import { addDays, toDateKey, todayKey, startOfWeek, isFutureDay, MONTH_KEYS } from '../lib/dateUtils'
+import { REMINDER_TIMES } from '../components/AddHabitModal'
 import HabitGrid from '../components/HabitGrid'
 import AddHabitModal from '../components/AddHabitModal'
 import HabitActionSheet from '../components/HabitActionSheet'
@@ -28,14 +29,19 @@ export default function Home() {
   const [menuHabit, setMenuHabit] = useState(null)
   const [editHabit, setEditHabit] = useState(null)
   const [deleting, setDeleting] = useState(false)
+  const [selectedDate, setSelectedDate] = useState(() => new Date())
+
+  const selectedKey = toDateKey(selectedDate)
+  const isToday = selectedKey === todayKey()
+  const canToggle = !isFutureDay(selectedDate)
 
   const load = useCallback(async () => {
     if (!user) return
     setLoading(true)
     setLoadError(null)
     try {
-      const start = toDateKey(addDays(new Date(), -60))
-      const end = todayKey()
+      const start = toDateKey(addDays(new Date(), -120))
+      const end = toDateKey(addDays(new Date(), 7))
       const [habitsData, logsData] = await Promise.all([
         fetchHabits(user.uid),
         fetchLogsInRange(user.uid, start, end),
@@ -58,13 +64,12 @@ export default function Home() {
   }, [load])
 
   const doneMap = useMemo(() => {
-    const today = todayKey()
     const map = {}
     for (const log of logs) {
-      if (log.logDate === today) map[log.habitId] = true
+      if (log.logDate === selectedKey) map[log.habitId] = true
     }
     return map
-  }, [logs])
+  }, [logs, selectedKey])
 
   const streakMap = useMemo(() => {
     const byHabit = {}
@@ -78,14 +83,16 @@ export default function Home() {
   }, [logs, habits])
 
   async function handleToggle(habit) {
-    const today = todayKey()
-    const existing = logs.find((l) => l.habitId === habit.id && l.logDate === today)
+    if (!canToggle) return
+    const existing = logs.find((l) => l.habitId === habit.id && l.logDate === selectedKey)
     // optimistic update
     setLogs((prev) =>
-      existing ? prev.filter((l) => l.id !== existing.id) : [...prev, { id: 'temp', habitId: habit.id, logDate: today }]
+      existing
+        ? prev.filter((l) => l.id !== existing.id)
+        : [...prev, { id: 'temp', habitId: habit.id, logDate: selectedKey }]
     )
     try {
-      await toggleHabitToday(habit, user.uid, existing)
+      await toggleHabitOnDate(habit, user.uid, selectedKey, existing)
     } catch {
       load()
     }
@@ -119,20 +126,79 @@ export default function Home() {
     }
   }
 
-  const dateStr = new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })
+  // Group habits into time-of-day sections, in the fixed order defined by
+  // REMINDER_TIMES. Habits saved before this field existed default to
+  // 'anytime'.
+  const groups = useMemo(() => {
+    const byKey = {}
+    for (const h of habits) {
+      const key = REMINDER_TIMES.some((rt) => rt.key === h.reminderTime) ? h.reminderTime : 'anytime'
+      if (!byKey[key]) byKey[key] = []
+      byKey[key].push(h)
+    }
+    return REMINDER_TIMES.map((rt) => ({ ...rt, habits: byKey[rt.key] || [] })).filter((g) => g.habits.length > 0)
+  }, [habits])
+
+  const weekStart = startOfWeek(selectedDate)
+  const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i))
+  const monthAbbrev = t(MONTH_KEYS[selectedDate.getMonth()])
 
   return (
     <div className="app-shell">
-      <div className="screen">
-        <div className="topbar" style={{ padding: '0 0 4px' }}>
-          <div>
-            <h1>{t('appName')}</h1>
-            <div style={{ color: 'var(--ink-soft)', fontSize: 'var(--fs-sm)', marginTop: 4 }}>{dateStr}</div>
-          </div>
+      <div className="home-banner">
+        <div className="home-banner-decor" aria-hidden="true">
+          🌳🌲🌸🌴🌵
+        </div>
+        <div className="home-banner-top">
+          <h1>{t('appName')}</h1>
           <button className="icon-btn" onClick={() => setShowAdd(true)} aria-label={t('addHabit')}>
             ＋
           </button>
         </div>
+        <div className="home-banner-tagline">{t('tagline')}</div>
+      </div>
+
+      <div className="day-strip">
+        <button
+          className="day-strip-nav"
+          onClick={() => setSelectedDate((d) => addDays(d, -7))}
+          aria-label={t('prev')}
+        >
+          ‹
+        </button>
+        <span className="day-strip-month">{monthAbbrev}</span>
+        <div className="day-strip-days">
+          {weekDays.map((d) => {
+            const key = toDateKey(d)
+            const active = key === selectedKey
+            const today = key === todayKey()
+            return (
+              <button
+                key={key}
+                className={'day-strip-cell' + (active ? ' active' : '') + (today && !active ? ' is-today' : '')}
+                onClick={() => setSelectedDate(d)}
+              >
+                <span className="day-strip-dow">{d.toLocaleDateString(undefined, { weekday: 'short' })}</span>
+                <span className="day-strip-num">{d.getDate()}</span>
+              </button>
+            )
+          })}
+        </div>
+        <button
+          className="day-strip-nav"
+          onClick={() => setSelectedDate((d) => addDays(d, 7))}
+          aria-label={t('next')}
+        >
+          ›
+        </button>
+      </div>
+
+      <div className="screen" style={{ paddingTop: 4 }}>
+        {!isToday && (
+          <button className="chip-back-today" onClick={() => setSelectedDate(new Date())}>
+            ← {t('today')}
+          </button>
+        )}
 
         {loadError && (
           <div
@@ -160,16 +226,32 @@ export default function Home() {
 
         {loading ? (
           <div className="center-loading">{t('loading')}</div>
-        ) : (
+        ) : habits.length === 0 ? (
           <HabitGrid
-            habits={habits}
-            doneMap={doneMap}
-            streakMap={streakMap}
+            habits={[]}
+            doneMap={{}}
+            streakMap={{}}
             readOnly={false}
             onToggle={handleToggle}
-            onAdd={() => setShowAdd(true)}
             onMenu={(habit) => setMenuHabit(habit)}
           />
+        ) : (
+          groups.map((g) => (
+            <div key={g.key} className="habit-section">
+              <div className="habit-section-header">
+                <span className="habit-section-icon">{g.icon}</span>
+                <h2>{t(g.key)}</h2>
+              </div>
+              <HabitGrid
+                habits={g.habits}
+                doneMap={doneMap}
+                streakMap={streakMap}
+                readOnly={false}
+                onToggle={handleToggle}
+                onMenu={(habit) => setMenuHabit(habit)}
+              />
+            </div>
+          ))
         )}
       </div>
 

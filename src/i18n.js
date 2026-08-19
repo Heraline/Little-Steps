@@ -76,6 +76,12 @@ export const translations = {
     yearlyCompletedDays: 'Days Completed This Year',
     upcoming: 'Upcoming',
     todayAbbrev: 'Now',
+    reminderTime: 'When',
+    anytime: 'Anytime',
+    morning: 'Morning',
+    noon: 'Noon',
+    evening: 'Evening',
+    night: 'Night',
   },
   zh: {
     appName: '一点点',
@@ -154,6 +160,12 @@ export const translations = {
     yearlyCompletedDays: '年度完成天数',
     upcoming: '未来',
     todayAbbrev: '今',
+    reminderTime: '提醒时段',
+    anytime: '任意时间',
+    morning: '早上',
+    noon: '中午',
+    evening: '傍晚',
+    night: '晚上',
   },
 }
 

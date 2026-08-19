@@ -28,7 +28,7 @@ export default function HabitGrid({ habits, doneMap, streakMap, readOnly, onTogg
           onMenu={onMenu}
         />
       ))}
-      {!readOnly && (
+      {!readOnly && onAdd && (
         <button type="button" className="habit-tile add-tile" onClick={onAdd} aria-label={t('addHabit')}>
           <span className="tile-icon">＋</span>
           <span className="tile-name">{t('addHabit')}</span>
