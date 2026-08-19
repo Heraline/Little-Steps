@@ -1,16 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useLang } from '../contexts/LangContext'
 import { fetchHabits, fetchLogsInRange } from '../lib/habitApi'
-import {
-  toDateKey,
-  startOfWeek,
-  addDays,
-  getMonthDays,
-  daysInMonth,
-  isFutureDay,
-  MONTH_KEYS,
-  WEEKDAY_KEYS,
-} from '../lib/dateUtils'
+import { toDateKey, startOfWeek, addDays, getMonthDays, isFutureDay, WEEKDAY_KEYS } from '../lib/dateUtils'
+import { getWeekDots, getMonthDots, getYearMonthDots } from '../lib/habitStats'
 import PeriodTabs from './PeriodTabs'
 import PeriodNav from './PeriodNav'
 
@@ -125,40 +117,17 @@ function HabitSummaryRow({ habit, period, anchor, doneDates, lang, t, onClick })
   let count = 0
 
   if (period === 'week') {
-    const start = startOfWeek(anchor)
-    for (let i = 0; i < 7; i++) {
-      const d = addDays(start, i)
-      const key = toDateKey(d)
-      const done = doneDates.has(key)
-      if (done) count++
-      dots.push(
-        <span key={key} className={`dot ${done ? 'done' : isFutureDay(d) ? 'future' : 'missed'}`} />
-      )
-    }
+    const result = getWeekDots(anchor, doneDates)
+    count = result.count
+    dots = result.dots.map((d) => <span key={d.key} className={`dot ${d.state}`} />)
   } else if (period === 'month') {
-    const total = daysInMonth(anchor.getFullYear(), anchor.getMonth())
-    for (let day = 1; day <= total; day++) {
-      const d = new Date(anchor.getFullYear(), anchor.getMonth(), day)
-      const key = toDateKey(d)
-      const done = doneDates.has(key)
-      if (done) count++
-      dots.push(
-        <span key={key} className={`dot ${done ? 'done' : isFutureDay(d) ? 'future' : 'missed'}`} />
-      )
-    }
+    const result = getMonthDots(anchor, doneDates)
+    count = result.count
+    dots = result.dots.map((d) => <span key={d.key} className={`dot ${d.state}`} />)
   } else if (period === 'year') {
-    for (let m = 0; m < 12; m++) {
-      const total = daysInMonth(anchor.getFullYear(), m)
-      let monthDone = 0
-      for (let day = 1; day <= total; day++) {
-        const key = toDateKey(new Date(anchor.getFullYear(), m, day))
-        if (doneDates.has(key)) monthDone++
-      }
-      count += monthDone
-      const ratio = monthDone / total
-      const cls = ratio === 0 ? 'missed' : ratio < 0.6 ? 'future' : 'done'
-      dots.push(<span key={m} className={`dot ${cls}`} title={t(MONTH_KEYS[m])} />)
-    }
+    const result = getYearMonthDots(anchor, doneDates)
+    count = result.count
+    dots = result.dots.map((d) => <span key={d.key} className={`dot ${d.state}`} title={t(d.label)} />)
   }
 
   return (

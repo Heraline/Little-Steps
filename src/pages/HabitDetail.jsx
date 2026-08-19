@@ -3,16 +3,8 @@ import { useNavigate, useParams, useLocation } from 'react-router-dom'
 import { useLang } from '../contexts/LangContext'
 import { useAuth } from '../contexts/AuthContext'
 import { fetchHabit, fetchAllLogsForHabit, deleteHabit, computeCurrentStreak } from '../lib/habitApi'
-import {
-  toDateKey,
-  startOfWeek,
-  addDays,
-  getMonthDays,
-  daysInMonth,
-  isFutureDay,
-  MONTH_KEYS,
-  WEEKDAY_KEYS,
-} from '../lib/dateUtils'
+import { toDateKey, startOfWeek, addDays, getMonthDays, daysInMonth, isFutureDay, MONTH_KEYS, WEEKDAY_KEYS } from '../lib/dateUtils'
+import { getWeekDots, getMonthDots, getYearMonthDots } from '../lib/habitStats'
 import PeriodTabs from '../components/PeriodTabs'
 import PeriodNav from '../components/PeriodNav'
 
@@ -122,49 +114,61 @@ export default function HabitDetail() {
       <PeriodTabs value={period} onChange={setPeriod} />
       <PeriodNav label={label} onPrev={() => shift(-1)} onNext={() => shift(1)} />
 
-      {(period === 'calendar' || period === 'month') && (
-        <MonthGrid anchor={anchor} doneDates={doneDates} t={t} />
-      )}
-      {period === 'week' && <WeekGrid anchor={anchor} doneDates={doneDates} t={t} />}
+      {period === 'calendar' && <MonthCalendar anchor={anchor} doneDates={doneDates} t={t} />}
+      {period === 'week' && <PeriodDotCard period="week" anchor={anchor} doneDates={doneDates} t={t} />}
+      {period === 'month' && <PeriodDotCard period="month" anchor={anchor} doneDates={doneDates} t={t} />}
       {period === 'year' && <YearHeatmap anchor={anchor} doneDates={doneDates} t={t} />}
     </div>
   )
 }
 
-function WeekGrid({ anchor, doneDates, t }) {
-  const start = startOfWeek(anchor)
-  const days = Array.from({ length: 7 }, (_, i) => addDays(start, i))
-  const today = new Date()
+// Week / month view — identical dot-row logic and coloring to the
+// all-habits Analysis list (see habitStats.js), just rendered full-size
+// with a header stat block since this page covers a single habit.
+function PeriodDotCard({ period, anchor, doneDates, t }) {
+  const { dots, count, total } =
+    period === 'week' ? getWeekDots(anchor, doneDates) : getMonthDots(anchor, doneDates)
+  const pct = total ? Math.round((count / total) * 100) : 0
+  const titleKey = period === 'week' ? 'weeklyCompletedDays' : 'monthlyCompletedDays'
+
   return (
     <div className="stat-card">
-      <div className="week-grid">
-        {WEEKDAY_KEYS.map((k) => (
-          <div key={k} className="weekday-label">
-            {t(k)}
-          </div>
+      <div className="stat-card-header">
+        <span className="stat-card-header-title">
+          <span className="stat-card-header-icon">{period === 'week' ? '📆' : '📅'}</span>
+          {t(titleKey)}
+        </span>
+        <span className="stat-card-header-value">
+          {count}
+          {t('days')} - {pct}%
+        </span>
+      </div>
+
+      <div className="dot-row-large">
+        {dots.map((d) => (
+          <span key={d.key} className={`dot dot-lg ${d.state}`} />
         ))}
-        {days.map((d) => {
-          const key = toDateKey(d)
-          const done = doneDates.has(key)
-          const future = isFutureDay(d)
-          let cls = 'day-cell'
-          if (done) cls += ' done'
-          else if (future) cls += ' future'
-          else cls += ' missed'
-          if (toDateKey(d) === toDateKey(today)) cls += ' today'
-          return (
-            <div key={key} className={cls}>
-              <span className="day-num">{d.getDate()}</span>
-              {done && <span>✓</span>}
-            </div>
-          )
-        })}
+      </div>
+
+      <div className="calendar-legend">
+        <span className="legend-item">
+          <span className="legend-dot done" />
+          {t('done')}
+        </span>
+        <span className="legend-item">
+          <span className="legend-dot missed" />
+          {t('notDone')}
+        </span>
+        <span className="legend-item">
+          <span className="legend-dot future" />
+          {t('upcoming')}
+        </span>
       </div>
     </div>
   )
 }
 
-function MonthGrid({ anchor, doneDates, t }) {
+function MonthCalendar({ anchor, doneDates, t }) {
   const days = getMonthDays(anchor.getFullYear(), anchor.getMonth())
   const today = new Date()
 
@@ -177,7 +181,7 @@ function MonthGrid({ anchor, doneDates, t }) {
       <div className="stat-card-header">
         <span className="stat-card-header-title">
           <span className="stat-card-header-icon">📅</span>
-          {t('monthlyCompletedDays')}
+          {t('calendar')}
         </span>
         <span className="stat-card-header-value">
           {doneCount}

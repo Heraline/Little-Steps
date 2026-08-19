@@ -709,6 +709,18 @@ input:focus-visible {
 .dot.missed { background: var(--coral); }
 .dot.future { background: var(--border); }
 
+.dot-row-large {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.dot-lg {
+  width: 18px;
+  height: 18px;
+}
+
 .habit-row .row-count {
   font-weight: 800;
   color: var(--ink-soft);
