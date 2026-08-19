@@ -72,6 +72,10 @@ export const translations = {
     small: 'Small',
     medium: 'Medium',
     large: 'Large',
+    monthlyCompletedDays: 'Days Completed This Month',
+    yearlyCompletedDays: 'Days Completed This Year',
+    upcoming: 'Upcoming',
+    todayAbbrev: 'Now',
   },
   zh: {
     appName: '一点点',
@@ -146,6 +150,10 @@ export const translations = {
     small: '小',
     medium: '中',
     large: '大',
+    monthlyCompletedDays: '月度完成天数',
+    yearlyCompletedDays: '年度完成天数',
+    upcoming: '未来',
+    todayAbbrev: '今',
   },
 }
 

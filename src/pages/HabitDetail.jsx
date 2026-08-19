@@ -87,16 +87,21 @@ export default function HabitDetail() {
         <button className="icon-btn" onClick={() => navigate(-1)} aria-label={t('back')}>
           ←
         </button>
-        <h1 style={{ fontSize: 'var(--fs-lg)' }}>
-          {habit.icon} {name}
-        </h1>
+        <span style={{ width: 40 }} />
         {isOwner ? (
           <button className="icon-btn" onClick={handleDelete} aria-label={t('delete')}>
             🗑️
           </button>
         ) : (
-          <span style={{ width: 56 }} />
+          <span style={{ width: 40 }} />
         )}
+      </div>
+
+      <div className="habit-detail-header">
+        <div className="habit-detail-badge" style={{ background: habit.color + '26' }}>
+          <span>{habit.icon}</span>
+        </div>
+        <h1 className="habit-detail-name">{name}</h1>
       </div>
 
       <div style={{ display: 'flex', gap: 12, marginBottom: 20 }}>
@@ -162,8 +167,24 @@ function WeekGrid({ anchor, doneDates, t }) {
 function MonthGrid({ anchor, doneDates, t }) {
   const days = getMonthDays(anchor.getFullYear(), anchor.getMonth())
   const today = new Date()
+
+  const validDays = days.filter((d) => d && !isFutureDay(d))
+  const doneCount = validDays.filter((d) => doneDates.has(toDateKey(d))).length
+  const pct = validDays.length ? Math.round((doneCount / validDays.length) * 100) : 0
+
   return (
     <div className="stat-card">
+      <div className="stat-card-header">
+        <span className="stat-card-header-title">
+          <span className="stat-card-header-icon">📅</span>
+          {t('monthlyCompletedDays')}
+        </span>
+        <span className="stat-card-header-value">
+          {doneCount}
+          {t('days')} - {pct}%
+        </span>
+      </div>
+
       <div className="week-grid">
         {WEEKDAY_KEYS.map((k) => (
           <div key={k} className="weekday-label">
@@ -175,18 +196,33 @@ function MonthGrid({ anchor, doneDates, t }) {
           const key = toDateKey(d)
           const done = doneDates.has(key)
           const future = isFutureDay(d)
-          let cls = 'day-cell'
+          const isToday = toDateKey(d) === toDateKey(today)
+          let cls = 'day-pill'
           if (done) cls += ' done'
           else if (future) cls += ' future'
           else cls += ' missed'
-          if (toDateKey(d) === toDateKey(today)) cls += ' today'
+          if (isToday) cls += ' today'
           return (
-            <div key={i} className={cls}>
-              <span className="day-num">{d.getDate()}</span>
-              {done && <span style={{ fontSize: '11px' }}>✓</span>}
+            <div key={i} className="day-cell-wrap">
+              <span className={cls}>{isToday ? t('todayAbbrev') : d.getDate()}</span>
             </div>
           )
         })}
+      </div>
+
+      <div className="calendar-legend">
+        <span className="legend-item">
+          <span className="legend-dot done" />
+          {t('done')}
+        </span>
+        <span className="legend-item">
+          <span className="legend-dot missed" />
+          {t('notDone')}
+        </span>
+        <span className="legend-item">
+          <span className="legend-dot future" />
+          {t('upcoming')}
+        </span>
       </div>
     </div>
   )
@@ -194,24 +230,47 @@ function MonthGrid({ anchor, doneDates, t }) {
 
 function YearHeatmap({ anchor, doneDates, t }) {
   const year = anchor.getFullYear()
+
+  let yearDone = 0
+  let yearValid = 0
+
+  const rows = MONTH_KEYS.map((mk, m) => {
+    const total = daysInMonth(year, m)
+    const dots = []
+    for (let day = 1; day <= total; day++) {
+      const date = new Date(year, m, day)
+      const key = toDateKey(date)
+      const done = doneDates.has(key)
+      const future = isFutureDay(date)
+      if (!future) {
+        yearValid += 1
+        if (done) yearDone += 1
+      }
+      dots.push(<span key={key} className={`dot ${done ? 'done' : future ? 'future' : 'missed'}`} />)
+    }
+    return (
+      <div key={mk} className="year-month-row">
+        <span className="month-label">{t(mk)}</span>
+        <div className="year-dots">{dots}</div>
+      </div>
+    )
+  })
+
+  const pct = yearValid ? Math.round((yearDone / yearValid) * 100) : 0
+
   return (
     <div className="stat-card">
-      {MONTH_KEYS.map((mk, m) => {
-        const total = daysInMonth(year, m)
-        const dots = []
-        for (let day = 1; day <= total; day++) {
-          const key = toDateKey(new Date(year, m, day))
-          const done = doneDates.has(key)
-          const future = isFutureDay(new Date(year, m, day))
-          dots.push(<span key={key} className={`dot ${done ? 'done' : future ? 'future' : 'missed'}`} />)
-        }
-        return (
-          <div key={mk} className="year-month-row">
-            <span className="month-label">{t(mk)}</span>
-            <div className="year-dots">{dots}</div>
-          </div>
-        )
-      })}
+      <div className="stat-card-header">
+        <span className="stat-card-header-title">
+          <span className="stat-card-header-icon">🗓️</span>
+          {t('yearlyCompletedDays')}
+        </span>
+        <span className="stat-card-header-value">
+          {yearDone}
+          {t('days')} - {pct}%
+        </span>
+      </div>
+      {rows}
     </div>
   )
 }
