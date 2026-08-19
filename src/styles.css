@@ -558,6 +558,48 @@ input:focus-visible {
   color: #fff;
 }
 
+/* ---------- Reminder time picker (icon on top, label below) ---------- */
+.reminder-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+}
+
+.reminder-cell {
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--border);
+  background: var(--card);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 10px 2px;
+  min-height: 72px;
+}
+
+.reminder-cell-icon {
+  font-size: 22px;
+  line-height: 1;
+}
+
+.reminder-cell-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ink-soft);
+  text-align: center;
+  line-height: 1.15;
+}
+
+.reminder-cell.selected {
+  border-color: var(--sage);
+  background: var(--sage-soft);
+}
+
+.reminder-cell.selected .reminder-cell-label {
+  color: var(--ink);
+}
+
 /* ---------- Modal ---------- */
 .modal-backdrop {
   position: fixed;

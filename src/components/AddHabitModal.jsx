@@ -1,7 +1,13 @@
 import { useState } from 'react'
 import { useLang } from '../contexts/LangContext'
 
-const ICONS = ['💧', '🥛', '🏃', '☕', '🧘', '💰', '📖', '🎨', '🍎', '🥦', '💊', '⏰', '🛁', '😴', '📝', '🚭', '🚶', '🧹']
+const ICONS = [
+  '💧', '🥛', '🏃', '☕', '🧘', '💰', '📖', '🎨', '🍎', '🥦',
+  '💊', '⏰', '🛁', '😴', '📝', '🚭', '🚶', '🧹', '🏋️', '🚴',
+  '🎧', '🎹', '🎸', '💻', '📞', '🪥', '🍳', '🥗', '🍵', '🌞',
+  '🌳', '🐕', '🙏', '🏊', '⚽', '🎯', '📷', '✂️', '🎮', '🧴',
+  '🧵', '🧦', '🧼', '🪴', '🚗', '✈️', '🎓', '🧠', '❤️', '🌟',
+]
 const COLORS = ['#6FA88F', '#FF7A6B', '#F2A65A', '#A8A4D9', '#5BA3D0', '#E27DBF', '#8FBF6F', '#D9534F']
 
 export const REMINDER_TIMES = [
@@ -125,15 +131,16 @@ export default function AddHabitModal({ onClose, onSave, habit }) {
 
         <div className="field">
           <label>{t('reminderTime')}</label>
-          <div className="segmented segmented-wrap">
+          <div className="reminder-grid">
             {REMINDER_TIMES.map((rt) => (
               <button
                 key={rt.key}
                 type="button"
-                className={reminderTime === rt.key ? 'active' : ''}
+                className={'reminder-cell' + (reminderTime === rt.key ? ' selected' : '')}
                 onClick={() => setReminderTime(rt.key)}
               >
-                {rt.icon} {t(rt.key)}
+                <span className="reminder-cell-icon">{rt.icon}</span>
+                <span className="reminder-cell-label">{t(rt.key)}</span>
               </button>
             ))}
           </div>
