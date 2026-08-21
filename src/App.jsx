@@ -9,6 +9,7 @@ import HabitDetail from './pages/HabitDetail'
 import Friends from './pages/Friends'
 import FriendDashboard from './pages/FriendDashboard'
 import Profile from './pages/Profile'
+import IconLibrary from './pages/IconLibrary'
 
 function RequireAuth({ children }) {
   const { session, loading } = useAuth()
@@ -72,6 +73,14 @@ export default function App() {
         element={
           <RequireAuth>
             <Profile />
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/icons"
+        element={
+          <RequireAuth>
+            <IconLibrary />
           </RequireAuth>
         }
       />

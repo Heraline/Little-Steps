@@ -4,13 +4,19 @@ import { useLang } from '../contexts/LangContext'
 const FRAME_SIZE = 220 // on-screen crop frame, in CSS px (square)
 const OUTPUT_SIZE = 240 // exported image size, in px
 
-export default function IconCropEditor({ imageUrl, onCancel, onConfirm }) {
+// Two steps: crop/zoom the image, then (optionally) name it so it gets
+// saved into the person's reusable icon library. `onConfirm(dataUrl, name)`
+// is called once — `name` is null if they chose "just use once".
+export default function IconCropEditor({ imageUrl, initialName, allowSkip = true, onCancel, onConfirm }) {
   const { t } = useLang()
   const imgElRef = useRef(null)
   const dragRef = useRef(null)
   const [natural, setNatural] = useState(null)
   const [zoom, setZoom] = useState(1)
   const [offset, setOffset] = useState({ x: 0, y: 0 })
+  const [step, setStep] = useState('crop')
+  const [croppedDataUrl, setCroppedDataUrl] = useState(null)
+  const [name, setName] = useState(initialName || '')
 
   useEffect(() => {
     let cancelled = false
@@ -28,12 +34,12 @@ export default function IconCropEditor({ imageUrl, onCancel, onConfirm }) {
     }
   }, [imageUrl])
 
-  if (!natural) return null
+  if (step === 'crop' && !natural) return null
 
-  const coverScale = Math.max(FRAME_SIZE / natural.w, FRAME_SIZE / natural.h)
+  const coverScale = natural ? Math.max(FRAME_SIZE / natural.w, FRAME_SIZE / natural.h) : 1
   const scale = coverScale * zoom
-  const displayW = natural.w * scale
-  const displayH = natural.h * scale
+  const displayW = natural ? natural.w * scale : 0
+  const displayH = natural ? natural.h * scale : 0
 
   function clamp(next, dW, dH) {
     const maxX = Math.max(0, (dW - FRAME_SIZE) / 2)
@@ -73,7 +79,7 @@ export default function IconCropEditor({ imageUrl, onCancel, onConfirm }) {
     setOffset((prev) => clamp(prev, natural.w * newScale, natural.h * newScale))
   }
 
-  function handleConfirm() {
+  function handleCropNext() {
     const canvas = document.createElement('canvas')
     canvas.width = OUTPUT_SIZE
     canvas.height = OUTPUT_SIZE
@@ -88,7 +94,44 @@ export default function IconCropEditor({ imageUrl, onCancel, onConfirm }) {
       displayW * drawScale,
       displayH * drawScale
     )
-    onConfirm(canvas.toDataURL('image/jpeg', 0.86))
+    setCroppedDataUrl(canvas.toDataURL('image/jpeg', 0.86))
+    setStep('name')
+  }
+
+  if (step === 'name') {
+    return (
+      <div className="modal-backdrop" onClick={(e) => { e.stopPropagation(); onCancel() }}>
+        <div className="modal-sheet" onClick={(e) => e.stopPropagation()}>
+          <h2 className="modal-title">{t('nameIconTitle')}</h2>
+          <img src={croppedDataUrl} alt="" className="crop-name-preview" />
+          <div className="field">
+            <label htmlFor="icon-name">{t('iconName')}</label>
+            <input
+              id="icon-name"
+              type="text"
+              placeholder={t('iconNamePlaceholder')}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              autoFocus
+            />
+          </div>
+          <button
+            type="button"
+            className="btn btn-primary"
+            style={{ marginBottom: 10 }}
+            disabled={!name.trim()}
+            onClick={() => onConfirm(croppedDataUrl, name.trim())}
+          >
+            {t('saveToLibrary')}
+          </button>
+          {allowSkip && (
+            <button type="button" className="btn btn-outline" onClick={() => onConfirm(croppedDataUrl, null)}>
+              {t('useOnce')}
+            </button>
+          )}
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -138,8 +181,8 @@ export default function IconCropEditor({ imageUrl, onCancel, onConfirm }) {
           <button type="button" className="btn btn-outline" style={{ flex: 1 }} onClick={onCancel}>
             {t('cancel')}
           </button>
-          <button type="button" className="btn btn-primary" style={{ flex: 1 }} onClick={handleConfirm}>
-            {t('usePhoto')}
+          <button type="button" className="btn btn-primary" style={{ flex: 1 }} onClick={handleCropNext}>
+            {t('next')}
           </button>
         </div>
       </div>

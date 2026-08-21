@@ -1,6 +1,8 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useLang } from '../contexts/LangContext'
+import { useAuth } from '../contexts/AuthContext'
 import { readFileAsDataUrl } from '../lib/imageUtils'
+import { fetchIconLibrary, createLibraryIcon } from '../lib/iconLibraryApi'
 import { isCustomIconUrl } from './HabitIcon'
 import IconCropEditor from './IconCropEditor'
 
@@ -27,6 +29,7 @@ const MAX_ORIGINAL_BYTES = 15 * 1024 * 1024 // original file, before client-side
 
 export default function AddHabitModal({ onClose, onSave, habit }) {
   const { t, lang } = useLang()
+  const { user } = useAuth()
   const isEdit = Boolean(habit)
   const [nameZh, setNameZh] = useState(habit?.nameZh || '')
   const [nameEn, setNameEn] = useState(habit?.nameEn || '')
@@ -42,9 +45,25 @@ export default function AddHabitModal({ onClose, onSave, habit }) {
   const [uploadError, setUploadError] = useState(null)
   const [dragActive, setDragActive] = useState(false)
   const [cropSource, setCropSource] = useState(null) // raw image awaiting crop confirmation
+  const [library, setLibrary] = useState([])
+  const [iconSearch, setIconSearch] = useState('')
+
+  useEffect(() => {
+    if (!user) return
+    let cancelled = false
+    fetchIconLibrary(user.uid).then((items) => {
+      if (!cancelled) setLibrary(items)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [user])
 
   const nameValue = lang === 'zh' ? nameZh : nameEn
   const canSave = nameValue.trim().length > 0 && !saving
+  const filteredLibrary = library.filter((item) =>
+    item.name.toLowerCase().includes(iconSearch.trim().toLowerCase())
+  )
 
   async function processFile(file) {
     if (!file) return
@@ -110,6 +129,19 @@ export default function AddHabitModal({ onClose, onSave, habit }) {
     }
   }
 
+  async function handleCropConfirm(dataUrl, name) {
+    setIcon(dataUrl)
+    setCropSource(null)
+    if (name && user) {
+      try {
+        const saved = await createLibraryIcon(user.uid, { name, dataUrl })
+        setLibrary((prev) => [saved, ...prev])
+      } catch (err) {
+        console.error('Failed to save icon to library:', err)
+      }
+    }
+  }
+
   return (
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal-sheet" onClick={(e) => e.stopPropagation()}>
@@ -169,6 +201,36 @@ export default function AddHabitModal({ onClose, onSave, habit }) {
             )}
           </div>
           {uploadError && <p className="field-error">{uploadError}</p>}
+
+          {library.length > 0 && (
+            <div className="icon-category">
+              <div className="icon-category-label">{t('myIcons')}</div>
+              <input
+                type="text"
+                className="icon-search-input"
+                placeholder={t('searchIcons')}
+                value={iconSearch}
+                onChange={(e) => setIconSearch(e.target.value)}
+              />
+              {filteredLibrary.length === 0 ? (
+                <p className="icon-search-empty">{t('noIconsFound')}</p>
+              ) : (
+                <div className="picker-grid">
+                  {filteredLibrary.map((item) => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      className={'picker-cell picker-cell-img' + (icon === item.dataUrl ? ' selected' : '')}
+                      onClick={() => setIcon(item.dataUrl)}
+                      title={item.name}
+                    >
+                      <img src={item.dataUrl} alt={item.name} className="picker-cell-thumb" />
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
           {ICON_CATEGORIES.map((cat) => (
             <div key={cat.key} className="icon-category">
@@ -257,14 +319,7 @@ export default function AddHabitModal({ onClose, onSave, habit }) {
       </div>
 
       {cropSource && (
-        <IconCropEditor
-          imageUrl={cropSource}
-          onCancel={() => setCropSource(null)}
-          onConfirm={(dataUrl) => {
-            setIcon(dataUrl)
-            setCropSource(null)
-          }}
-        />
+        <IconCropEditor imageUrl={cropSource} onCancel={() => setCropSource(null)} onConfirm={handleCropConfirm} />
       )}
     </div>
   )

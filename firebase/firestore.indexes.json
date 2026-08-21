@@ -25,6 +25,14 @@
         { "fieldPath": "userId", "order": "ASCENDING" },
         { "fieldPath": "logDate", "order": "ASCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "iconLibrary",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "userId", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []

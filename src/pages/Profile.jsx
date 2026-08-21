@@ -1,10 +1,12 @@
 import { useAuth } from '../contexts/AuthContext'
 import { useLang } from '../contexts/LangContext'
+import { useNavigate } from 'react-router-dom'
 import BottomNav from '../components/BottomNav'
 
 export default function Profile() {
   const { profile, signOut } = useAuth()
   const { lang, setLang, fontSize, setFontSize, t } = useLang()
+  const navigate = useNavigate()
 
   return (
     <div className="app-shell">
@@ -48,7 +50,11 @@ export default function Profile() {
           </div>
         </div>
 
-        <button className="btn btn-danger" onClick={signOut} style={{ marginTop: 20 }}>
+        <button className="btn btn-outline" onClick={() => navigate('/icons')} style={{ marginTop: 20 }}>
+          🖼️ {t('iconLibrary')}
+        </button>
+
+        <button className="btn btn-danger" onClick={signOut} style={{ marginTop: 12 }}>
           {t('signOut')}
         </button>
       </div>

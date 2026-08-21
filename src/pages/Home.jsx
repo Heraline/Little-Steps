@@ -201,20 +201,7 @@ export default function Home() {
         )}
 
         {loadError && (
-          <div
-            role="alert"
-            style={{
-              background: '#FDEDEC',
-              border: '1px solid #D9534F',
-              color: '#8a2e28',
-              borderRadius: 'var(--radius-sm)',
-              padding: '12px 14px',
-              margin: '8px 0',
-              fontSize: 'var(--fs-sm)',
-              lineHeight: 1.4,
-              wordBreak: 'break-word',
-            }}
-          >
+          <div role="alert" className="load-error-banner">
             <strong>Couldn't load your habits.</strong> {loadError}
             <div style={{ marginTop: 8 }}>
               <button className="btn btn-outline" onClick={load}>
