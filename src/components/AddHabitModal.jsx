@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { useLang } from '../contexts/LangContext'
-import { resizeImageToDataUrl } from '../lib/imageUtils'
-import HabitIcon, { isCustomIconUrl } from './HabitIcon'
+import { readFileAsDataUrl } from '../lib/imageUtils'
+import { isCustomIconUrl } from './HabitIcon'
+import IconCropEditor from './IconCropEditor'
 
 const ICON_CATEGORIES = [
   { key: 'catHealth', icons: ['💧', '🥛', '💊', '🛁', '😴', '🪥', '🧴', '🧠', '❤️'] },
@@ -39,13 +40,13 @@ export default function AddHabitModal({ onClose, onSave, habit }) {
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [uploadError, setUploadError] = useState(null)
+  const [dragActive, setDragActive] = useState(false)
+  const [cropSource, setCropSource] = useState(null) // raw image awaiting crop confirmation
 
   const nameValue = lang === 'zh' ? nameZh : nameEn
   const canSave = nameValue.trim().length > 0 && !saving
 
-  async function handleFileChange(e) {
-    const file = e.target.files?.[0]
-    e.target.value = ''
+  async function processFile(file) {
     if (!file) return
     if (!file.type.startsWith('image/')) {
       setUploadError(t('uploadInvalidType'))
@@ -58,14 +59,37 @@ export default function AddHabitModal({ onClose, onSave, habit }) {
     setUploading(true)
     setUploadError(null)
     try {
-      const dataUrl = await resizeImageToDataUrl(file)
-      setIcon(dataUrl)
+      const dataUrl = await readFileAsDataUrl(file)
+      setCropSource(dataUrl)
     } catch (err) {
-      console.error('Icon processing failed:', err)
+      console.error('Icon read failed:', err)
       setUploadError(err.message || String(err))
     } finally {
       setUploading(false)
     }
+  }
+
+  function handleFileInputChange(e) {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    processFile(file)
+  }
+
+  function handleDrop(e) {
+    e.preventDefault()
+    setDragActive(false)
+    const file = e.dataTransfer.files?.[0]
+    processFile(file)
+  }
+
+  function handleDragOver(e) {
+    e.preventDefault()
+    setDragActive(true)
+  }
+
+  function handleDragLeave(e) {
+    e.preventDefault()
+    setDragActive(false)
   }
 
   async function handleSave() {
@@ -107,22 +131,42 @@ export default function AddHabitModal({ onClose, onSave, habit }) {
         <div className="field">
           <label>{t('chooseIcon')}</label>
 
-          <div className="icon-upload-row">
-            <label className={'reminder-cell upload-cell' + (isCustomIconUrl(icon) ? ' selected' : '')}>
-              {uploading ? (
-                <span className="reminder-cell-icon">⏳</span>
-              ) : (
-                <HabitIcon icon={isCustomIconUrl(icon) ? icon : '📤'} imgSize="70%" className="reminder-cell-icon" />
-              )}
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleFileChange}
-                disabled={uploading}
-                style={{ display: 'none' }}
-              />
-            </label>
-            <span className="icon-upload-hint">{t('uploadOwnIcon')}</span>
+          <div
+            className={'icon-dropzone' + (dragActive ? ' drag-active' : '') + (isCustomIconUrl(icon) ? ' has-preview' : '')}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+          >
+            {isCustomIconUrl(icon) ? (
+              <div className="icon-dropzone-preview">
+                <img src={icon} alt="" className="icon-dropzone-thumb" />
+                <div className="icon-dropzone-actions">
+                  <button type="button" className="btn btn-outline btn-sm" onClick={() => setCropSource(icon)}>
+                    ✏️ {t('editIcon')}
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-outline btn-sm"
+                    onClick={() => setIcon(ICON_CATEGORIES[0].icons[0])}
+                  >
+                    {t('remove')}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <label className="icon-dropzone-empty">
+                <span className="icon-dropzone-icon">{uploading ? '⏳' : '📤'}</span>
+                <span className="icon-dropzone-text">{t('uploadOwnIcon')}</span>
+                <span className="icon-dropzone-subtext">{t('dragDropHint')}</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileInputChange}
+                  disabled={uploading}
+                  style={{ display: 'none' }}
+                />
+              </label>
+            )}
           </div>
           {uploadError && <p className="field-error">{uploadError}</p>}
 
@@ -211,6 +255,17 @@ export default function AddHabitModal({ onClose, onSave, habit }) {
           {t('cancel')}
         </button>
       </div>
+
+      {cropSource && (
+        <IconCropEditor
+          imageUrl={cropSource}
+          onCancel={() => setCropSource(null)}
+          onConfirm={(dataUrl) => {
+            setIcon(dataUrl)
+            setCropSource(null)
+          }}
+        />
+      )}
     </div>
   )
 }

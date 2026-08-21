@@ -600,30 +600,78 @@ input:focus-visible {
   color: var(--ink);
 }
 
-/* ---------- Icon upload + categorized picker ---------- */
-.icon-upload-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
+/* ---------- Icon upload dropzone + categorized picker ---------- */
+.icon-dropzone {
+  border: 2px dashed var(--border);
+  border-radius: var(--radius-md);
+  background: var(--card);
+  transition: border-color 0.15s ease, background-color 0.15s ease;
   margin-bottom: 6px;
 }
 
-.icon-upload-row .upload-cell {
-  width: 56px;
-  height: 56px;
-  min-height: 0;
-  border-style: dashed;
-  cursor: pointer;
+.icon-dropzone.drag-active {
+  border-color: var(--sage);
+  background: var(--sage-soft);
 }
 
-.icon-upload-row .upload-cell.selected {
+.icon-dropzone.has-preview {
   border-style: solid;
 }
 
-.icon-upload-hint {
+.icon-dropzone-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 22px 12px;
+  cursor: pointer;
+  text-align: center;
+}
+
+.icon-dropzone-icon {
+  font-size: 28px;
+  margin-bottom: 4px;
+}
+
+.icon-dropzone-text {
   font-size: var(--fs-sm);
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.icon-dropzone-subtext {
+  font-size: 11px;
   color: var(--ink-soft);
-  font-weight: 600;
+}
+
+.icon-dropzone-preview {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px;
+}
+
+.icon-dropzone-thumb {
+  width: 64px;
+  height: 64px;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.icon-dropzone-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+}
+
+.btn-sm {
+  width: auto;
+  min-height: 36px;
+  padding: 0 14px;
+  font-size: var(--fs-sm);
 }
 
 .field-error {
@@ -643,6 +691,46 @@ input:focus-visible {
   text-transform: uppercase;
   letter-spacing: 0.04em;
   margin-bottom: 6px;
+}
+
+/* ---------- Icon crop / zoom editor ---------- */
+.crop-hint {
+  font-size: var(--fs-sm);
+  color: var(--ink-soft);
+  margin-bottom: 14px;
+}
+
+.crop-frame {
+  width: 220px;
+  height: 220px;
+  margin: 0 auto;
+  border-radius: 50%;
+  overflow: hidden;
+  position: relative;
+  background: #000;
+  cursor: grab;
+  touch-action: none;
+  box-shadow: 0 0 0 4px var(--sage-soft);
+}
+
+.crop-frame:active {
+  cursor: grabbing;
+}
+
+.crop-frame-img {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform-origin: center;
+  user-select: none;
+  pointer-events: none;
+  max-width: none;
+}
+
+.crop-zoom-slider {
+  width: 100%;
+  margin-top: 18px;
+  accent-color: var(--sage);
 }
 
 /* ---------- Modal ---------- */

@@ -93,6 +93,13 @@ export const translations = {
     uploadOwnIcon: 'Upload your own icon',
     uploadInvalidType: 'Please choose an image file.',
     uploadTooLarge: 'That image is too large (max 15MB).',
+    dragDropHint: 'Drag & drop, or tap to browse',
+    editIcon: 'Edit',
+    remove: 'Remove',
+    editIconTitle: 'Adjust Your Icon',
+    cropHint: 'Drag to reposition, use the slider to zoom.',
+    usePhoto: 'Use Photo',
+    zoom: 'Zoom',
   },
   zh: {
     appName: '一点点',
@@ -188,6 +195,13 @@ export const translations = {
     uploadOwnIcon: '上传自己的图标',
     uploadInvalidType: '请选择图片文件。',
     uploadTooLarge: '图片过大（最大 15MB）。',
+    dragDropHint: '拖放图片，或点击浏览',
+    editIcon: '编辑',
+    remove: '移除',
+    editIconTitle: '调整图标',
+    cropHint: '拖动图片调整位置，使用滑块缩放。',
+    usePhoto: '使用照片',
+    zoom: '缩放',
   },
 }
 
