@@ -36,7 +36,10 @@ export default function IconCropEditor({ imageUrl, initialName, allowSkip = true
 
   if (step === 'crop' && !natural) return null
 
-  const coverScale = natural ? Math.max(FRAME_SIZE / natural.w, FRAME_SIZE / natural.h) : 1
+  // Start at "contain" fit (whole image visible, zoomed out) rather than
+  // "cover" fit (image fills the frame edge-to-edge) — people can zoom in
+  // from here if they want a tighter crop.
+  const coverScale = natural ? Math.min(FRAME_SIZE / natural.w, FRAME_SIZE / natural.h) : 1
   const scale = coverScale * zoom
   const displayW = natural ? natural.w * scale : 0
   const displayH = natural ? natural.h * scale : 0
@@ -94,7 +97,7 @@ export default function IconCropEditor({ imageUrl, initialName, allowSkip = true
       displayW * drawScale,
       displayH * drawScale
     )
-    setCroppedDataUrl(canvas.toDataURL('image/jpeg', 0.86))
+    setCroppedDataUrl(canvas.toDataURL('image/png'))
     setStep('name')
   }
 
