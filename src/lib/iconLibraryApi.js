@@ -13,8 +13,14 @@ export async function fetchIconLibrary(userId) {
   return snap.docs.map(toIcon)
 }
 
-export async function createLibraryIcon(userId, { name, dataUrl }) {
-  const payload = { userId, name: name.trim(), dataUrl, createdAt: serverTimestamp() }
+export async function createLibraryIcon(userId, { name, dataUrl, category }) {
+  const payload = {
+    userId,
+    name: name.trim(),
+    dataUrl,
+    category: category || 'catOther',
+    createdAt: serverTimestamp(),
+  }
   const ref = await addDoc(libraryCol, payload)
   return { id: ref.id, ...payload }
 }
@@ -23,6 +29,7 @@ export async function updateLibraryIcon(iconId, updates) {
   const payload = {}
   if (updates.name !== undefined) payload.name = updates.name.trim()
   if (updates.dataUrl !== undefined) payload.dataUrl = updates.dataUrl
+  if (updates.category !== undefined) payload.category = updates.category
   await updateDoc(doc(db, 'iconLibrary', iconId), payload)
 }
 

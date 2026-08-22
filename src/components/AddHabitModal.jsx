@@ -3,18 +3,10 @@ import { useLang } from '../contexts/LangContext'
 import { useAuth } from '../contexts/AuthContext'
 import { readFileAsDataUrl } from '../lib/imageUtils'
 import { fetchIconLibrary, createLibraryIcon } from '../lib/iconLibraryApi'
+import { ICON_CATEGORIES } from '../lib/iconCategories'
 import { isCustomIconUrl } from './HabitIcon'
 import IconCropEditor from './IconCropEditor'
 
-const ICON_CATEGORIES = [
-  { key: 'catHealth', icons: ['💧', '🥛', '💊', '🛁', '😴', '🪥', '🧴', '🧠', '❤️'] },
-  { key: 'catFitness', icons: ['🏃', '🧘', '🏋️', '🚴', '🏊', '⚽', '🚶', '🎯'] },
-  { key: 'catDiet', icons: ['☕', '🍎', '🥦', '🍳', '🥗', '🍵'] },
-  { key: 'catHobby', icons: ['📖', '🎨', '🎧', '🎹', '🎸', '📷', '✂️', '🎮', '🧵'] },
-  { key: 'catWork', icons: ['💰', '📝', '💻', '📞', '🎓'] },
-  { key: 'catHome', icons: ['🧹', '🚭', '🧦', '🧼', '🪴'] },
-  { key: 'catOther', icons: ['⏰', '🌞', '🌳', '🐕', '🙏', '🚗', '✈️', '🌟'] },
-]
 const COLORS = ['#6FA88F', '#FF7A6B', '#F2A65A', '#A8A4D9', '#5BA3D0', '#E27DBF', '#8FBF6F', '#D9534F']
 
 export const REMINDER_TIMES = [
@@ -40,6 +32,8 @@ export default function AddHabitModal({ onClose, onSave, habit }) {
     habit?.frequency === 'weekly' ? habit.timesPerPeriod || 3 : 3
   )
   const [reminderTime, setReminderTime] = useState(habit?.reminderTime || 'anytime')
+  const [hasEndDate, setHasEndDate] = useState(Boolean(habit?.endDate))
+  const [endDate, setEndDate] = useState(habit?.endDate || '')
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [uploadError, setUploadError] = useState(null)
@@ -60,10 +54,12 @@ export default function AddHabitModal({ onClose, onSave, habit }) {
   }, [user])
 
   const nameValue = lang === 'zh' ? nameZh : nameEn
-  const canSave = nameValue.trim().length > 0 && !saving
+  const canSave = nameValue.trim().length > 0 && !saving && (!hasEndDate || Boolean(endDate))
   const filteredLibrary = library.filter((item) =>
     item.name.toLowerCase().includes(iconSearch.trim().toLowerCase())
   )
+  const isSearching = iconSearch.trim().length > 0
+  const todayStr = new Date().toISOString().slice(0, 10)
 
   async function processFile(file) {
     if (!file) return
@@ -123,18 +119,19 @@ export default function AddHabitModal({ onClose, onSave, habit }) {
         frequency,
         timesPerPeriod: frequency === 'weekly' ? timesPerWeek : 1,
         reminderTime,
+        endDate: hasEndDate && endDate ? endDate : null,
       })
     } finally {
       setSaving(false)
     }
   }
 
-  async function handleCropConfirm(dataUrl, name) {
+  async function handleCropConfirm(dataUrl, name, category) {
     setIcon(dataUrl)
     setCropSource(null)
     if (name && user) {
       try {
-        const saved = await createLibraryIcon(user.uid, { name, dataUrl })
+        const saved = await createLibraryIcon(user.uid, { name, dataUrl, category })
         setLibrary((prev) => [saved, ...prev])
       } catch (err) {
         console.error('Failed to save icon to library:', err)
@@ -203,18 +200,22 @@ export default function AddHabitModal({ onClose, onSave, habit }) {
           {uploadError && <p className="field-error">{uploadError}</p>}
 
           {library.length > 0 && (
-            <div className="icon-category">
-              <div className="icon-category-label">{t('myIcons')}</div>
-              <input
-                type="text"
-                className="icon-search-input"
-                placeholder={t('searchIcons')}
-                value={iconSearch}
-                onChange={(e) => setIconSearch(e.target.value)}
-              />
-              {filteredLibrary.length === 0 ? (
-                <p className="icon-search-empty">{t('noIconsFound')}</p>
-              ) : (
+            <input
+              type="text"
+              className="icon-search-input"
+              placeholder={t('searchIcons')}
+              value={iconSearch}
+              onChange={(e) => setIconSearch(e.target.value)}
+              style={{ marginTop: 4 }}
+            />
+          )}
+
+          {isSearching ? (
+            filteredLibrary.length === 0 ? (
+              <p className="icon-search-empty">{t('noIconsFound')}</p>
+            ) : (
+              <div className="icon-category">
+                <div className="icon-category-label">{t('myIcons')}</div>
                 <div className="picker-grid">
                   {filteredLibrary.map((item) => (
                     <button
@@ -228,27 +229,41 @@ export default function AddHabitModal({ onClose, onSave, habit }) {
                     </button>
                   ))}
                 </div>
-              )}
-            </div>
-          )}
-
-          {ICON_CATEGORIES.map((cat) => (
-            <div key={cat.key} className="icon-category">
-              <div className="icon-category-label">{t(cat.key)}</div>
-              <div className="picker-grid">
-                {cat.icons.map((ic) => (
-                  <button
-                    key={ic}
-                    type="button"
-                    className={'picker-cell' + (icon === ic ? ' selected' : '')}
-                    onClick={() => setIcon(ic)}
-                  >
-                    {ic}
-                  </button>
-                ))}
               </div>
-            </div>
-          ))}
+            )
+          ) : (
+            ICON_CATEGORIES.map((cat) => {
+              const customForCat = library.filter((item) => (item.category || 'catOther') === cat.key)
+              return (
+                <div key={cat.key} className="icon-category">
+                  <div className="icon-category-label">{t(cat.key)}</div>
+                  <div className="picker-grid">
+                    {cat.icons.map((ic) => (
+                      <button
+                        key={ic}
+                        type="button"
+                        className={'picker-cell' + (icon === ic ? ' selected' : '')}
+                        onClick={() => setIcon(ic)}
+                      >
+                        {ic}
+                      </button>
+                    ))}
+                    {customForCat.map((item) => (
+                      <button
+                        key={item.id}
+                        type="button"
+                        className={'picker-cell picker-cell-img' + (icon === item.dataUrl ? ' selected' : '')}
+                        onClick={() => setIcon(item.dataUrl)}
+                        title={item.name}
+                      >
+                        <img src={item.dataUrl} alt={item.name} className="picker-cell-thumb" />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )
+            })
+          )}
         </div>
 
         <div className="field">
@@ -308,6 +323,36 @@ export default function AddHabitModal({ onClose, onSave, habit }) {
               </button>
             ))}
           </div>
+        </div>
+
+        <div className="field">
+          <label className="toggle-row" htmlFor="has-end-date">
+            <span>{t('setEndDate')}</span>
+            <input
+              id="has-end-date"
+              type="checkbox"
+              className="toggle-checkbox"
+              checked={hasEndDate}
+              onChange={(e) => {
+                setHasEndDate(e.target.checked)
+                if (e.target.checked && !endDate) setEndDate(todayStr)
+              }}
+            />
+          </label>
+          {hasEndDate && (
+            <>
+              <input
+                type="date"
+                min={todayStr}
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                style={{ marginTop: 10 }}
+              />
+              <p className="crop-hint" style={{ marginTop: 6, marginBottom: 0 }}>
+                {t('endDateHint')}
+              </p>
+            </>
+          )}
         </div>
 
         <button className="btn btn-primary" onClick={handleSave} disabled={!canSave} style={{ marginBottom: 10 }}>

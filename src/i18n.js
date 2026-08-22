@@ -113,6 +113,11 @@ export const translations = {
     iconLibraryEmpty: "You haven't uploaded any icons yet.",
     addIcon: 'Add Icon',
     deleteIconConfirm: 'Delete this icon? Habits already using it will keep it.',
+    iconCategory: 'Category',
+    setEndDate: 'Set an end date',
+    endDateHint: 'This habit will stop appearing on your Home screen after this date. It stays in your stats.',
+    endsOn: 'Ends',
+    ended: 'Ended',
   },
   zh: {
     appName: '一点点',
@@ -228,6 +233,11 @@ export const translations = {
     iconLibraryEmpty: '你还没有上传任何图标。',
     addIcon: '添加图标',
     deleteIconConfirm: '删除此图标？已使用该图标的习惯不会受影响。',
+    iconCategory: '分类',
+    setEndDate: '设置结束日期',
+    endDateHint: '此日期之后，该习惯将不再显示在首页，但仍保留在统计中。',
+    endsOn: '结束于',
+    ended: '已结束',
   },
 }
 

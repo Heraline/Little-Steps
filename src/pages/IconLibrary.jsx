@@ -56,11 +56,11 @@ export default function IconLibrary() {
     }
   }
 
-  async function handleAddConfirm(dataUrl, name) {
+  async function handleAddConfirm(dataUrl, name, category) {
     setCropSource(null)
     if (!name) return
     try {
-      const saved = await createLibraryIcon(user.uid, { name, dataUrl })
+      const saved = await createLibraryIcon(user.uid, { name, dataUrl, category })
       setItems((prev) => [saved, ...prev])
     } catch (err) {
       console.error('Failed to save icon:', err)
@@ -68,13 +68,13 @@ export default function IconLibrary() {
     }
   }
 
-  async function handleEditConfirm(dataUrl, name) {
+  async function handleEditConfirm(dataUrl, name, category) {
     const target = editingItem
     setEditingItem(null)
     if (!target || !name) return
     try {
-      await updateLibraryIcon(target.id, { name, dataUrl })
-      setItems((prev) => prev.map((it) => (it.id === target.id ? { ...it, name, dataUrl } : it)))
+      await updateLibraryIcon(target.id, { name, dataUrl, category })
+      setItems((prev) => prev.map((it) => (it.id === target.id ? { ...it, name, dataUrl, category } : it)))
     } catch (err) {
       console.error('Failed to update icon:', err)
       window.alert(err.message || String(err))
@@ -178,6 +178,7 @@ export default function IconLibrary() {
                     {item.name}
                   </button>
                 )}
+                <span className="icon-library-category">{t(item.category || 'catOther')}</span>
 
                 <div className="icon-library-actions">
                   <button type="button" className="btn btn-outline btn-sm" onClick={() => setEditingItem(item)}>
@@ -206,6 +207,7 @@ export default function IconLibrary() {
         <IconCropEditor
           imageUrl={editingItem.dataUrl}
           initialName={editingItem.name}
+          initialCategory={editingItem.category}
           allowSkip={false}
           onCancel={() => setEditingItem(null)}
           onConfirm={handleEditConfirm}

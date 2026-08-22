@@ -551,6 +551,54 @@ input:focus-visible {
   padding: 8px 0;
 }
 
+/* ---------- Toggle row (e.g. "Set an end date") ---------- */
+.toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  margin-bottom: 0 !important;
+}
+
+.toggle-checkbox {
+  width: 22px !important;
+  height: 22px !important;
+  min-height: 0 !important;
+  accent-color: var(--sage);
+  flex-shrink: 0;
+}
+
+/* ---------- Category chip picker (used in the icon-naming step) ---------- */
+.category-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.category-chip {
+  border: 2px solid var(--border);
+  background: var(--card);
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  color: var(--ink-soft);
+}
+
+.category-chip.selected {
+  border-color: var(--sage);
+  background: var(--sage-soft);
+  color: var(--ink);
+}
+
+.icon-library-category {
+  font-size: 11px;
+  color: var(--ink-soft);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-top: -4px;
+}
+
 .load-error-banner {
   background: #FDEDEC;
   border: 1px solid #D9534F;
@@ -1052,6 +1100,13 @@ input:focus-visible {
 .habit-detail-name {
   font-size: var(--fs-lg);
   font-weight: 800;
+  text-align: center;
+}
+
+.habit-detail-enddate {
+  font-size: var(--fs-sm);
+  color: var(--ink-soft);
+  margin-top: 2px;
   text-align: center;
 }
 

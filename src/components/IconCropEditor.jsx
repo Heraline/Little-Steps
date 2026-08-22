@@ -1,13 +1,23 @@
 import { useEffect, useRef, useState } from 'react'
 import { useLang } from '../contexts/LangContext'
+import { ICON_CATEGORIES } from '../lib/iconCategories'
 
 const FRAME_SIZE = 220 // on-screen crop frame, in CSS px (square)
 const OUTPUT_SIZE = 240 // exported image size, in px
 
-// Two steps: crop/zoom the image, then (optionally) name it so it gets
-// saved into the person's reusable icon library. `onConfirm(dataUrl, name)`
-// is called once — `name` is null if they chose "just use once".
-export default function IconCropEditor({ imageUrl, initialName, allowSkip = true, onCancel, onConfirm }) {
+// Two steps: crop/zoom the image, then (optionally) name + categorize it
+// so it gets saved into the person's reusable icon library, grouped
+// alongside the built-in emoji of the same category. `onConfirm(dataUrl,
+// name, category)` is called once — `name` is null if they chose "just
+// use once".
+export default function IconCropEditor({
+  imageUrl,
+  initialName,
+  initialCategory,
+  allowSkip = true,
+  onCancel,
+  onConfirm,
+}) {
   const { t } = useLang()
   const imgElRef = useRef(null)
   const dragRef = useRef(null)
@@ -17,6 +27,7 @@ export default function IconCropEditor({ imageUrl, initialName, allowSkip = true
   const [step, setStep] = useState('crop')
   const [croppedDataUrl, setCroppedDataUrl] = useState(null)
   const [name, setName] = useState(initialName || '')
+  const [category, setCategory] = useState(initialCategory || 'catOther')
 
   useEffect(() => {
     let cancelled = false
@@ -118,17 +129,32 @@ export default function IconCropEditor({ imageUrl, initialName, allowSkip = true
               autoFocus
             />
           </div>
+          <div className="field">
+            <label>{t('iconCategory')}</label>
+            <div className="category-chip-row">
+              {ICON_CATEGORIES.map((cat) => (
+                <button
+                  key={cat.key}
+                  type="button"
+                  className={'category-chip' + (category === cat.key ? ' selected' : '')}
+                  onClick={() => setCategory(cat.key)}
+                >
+                  {t(cat.key)}
+                </button>
+              ))}
+            </div>
+          </div>
           <button
             type="button"
             className="btn btn-primary"
             style={{ marginBottom: 10 }}
             disabled={!name.trim()}
-            onClick={() => onConfirm(croppedDataUrl, name.trim())}
+            onClick={() => onConfirm(croppedDataUrl, name.trim(), category)}
           >
             {t('saveToLibrary')}
           </button>
           {allowSkip && (
-            <button type="button" className="btn btn-outline" onClick={() => onConfirm(croppedDataUrl, null)}>
+            <button type="button" className="btn btn-outline" onClick={() => onConfirm(croppedDataUrl, null, category)}>
               {t('useOnce')}
             </button>
           )}

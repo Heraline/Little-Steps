@@ -130,14 +130,18 @@ export default function Home() {
   // REMINDER_TIMES. Habits saved before this field existed default to
   // 'anytime'.
   const groups = useMemo(() => {
+    // A habit with an end date stops showing on days after that date (it
+    // still shows for past days when it was active, and stays visible in
+    // Analysis for historical stats regardless).
+    const active = habits.filter((h) => !h.endDate || h.endDate >= selectedKey)
     const byKey = {}
-    for (const h of habits) {
+    for (const h of active) {
       const key = REMINDER_TIMES.some((rt) => rt.key === h.reminderTime) ? h.reminderTime : 'anytime'
       if (!byKey[key]) byKey[key] = []
       byKey[key].push(h)
     }
     return REMINDER_TIMES.map((rt) => ({ ...rt, habits: byKey[rt.key] || [] })).filter((g) => g.habits.length > 0)
-  }, [habits])
+  }, [habits, selectedKey])
 
   const weekStart = startOfWeek(selectedDate)
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i))
@@ -213,7 +217,7 @@ export default function Home() {
 
         {loading ? (
           <div className="center-loading">{t('loading')}</div>
-        ) : habits.length === 0 ? (
+        ) : habits.length === 0 || groups.length === 0 ? (
           <HabitGrid
             habits={[]}
             doneMap={{}}

@@ -3,7 +3,7 @@ import { useNavigate, useParams, useLocation } from 'react-router-dom'
 import { useLang } from '../contexts/LangContext'
 import { useAuth } from '../contexts/AuthContext'
 import { fetchHabit, fetchAllLogsForHabit, deleteHabit, computeCurrentStreak } from '../lib/habitApi'
-import { toDateKey, startOfWeek, addDays, getMonthDays, daysInMonth, isFutureDay, MONTH_KEYS, WEEKDAY_KEYS } from '../lib/dateUtils'
+import { toDateKey, todayKey, startOfWeek, addDays, getMonthDays, daysInMonth, isFutureDay, MONTH_KEYS, WEEKDAY_KEYS } from '../lib/dateUtils'
 import { getWeekDots, getMonthDots, getYearMonthDots } from '../lib/habitStats'
 import HabitIcon from '../components/HabitIcon'
 import PeriodTabs from '../components/PeriodTabs'
@@ -95,6 +95,11 @@ export default function HabitDetail() {
           <HabitIcon icon={habit.icon} imgSize="70%" />
         </div>
         <h1 className="habit-detail-name">{name}</h1>
+        {habit.endDate && (
+          <p className="habit-detail-enddate">
+            {habit.endDate < todayKey() ? `${t('ended')} · ${habit.endDate}` : `${t('endsOn')} ${habit.endDate}`}
+          </p>
+        )}
       </div>
 
       <div style={{ display: 'flex', gap: 12, marginBottom: 20 }}>
